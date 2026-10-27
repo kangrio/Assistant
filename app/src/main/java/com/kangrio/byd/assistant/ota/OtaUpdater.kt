@@ -74,7 +74,7 @@ object OtaUpdater {
 
         scope.launch {
             try {
-                val releaseInfo = checkForUpdate(context, force = force)
+                val releaseInfo = checkForUpdate(context, force = force, preRelease = Preferences.useBetaUpdate)
                 if (releaseInfo != null) {
                     Log.i(TAG, "New OTA version available: ${releaseInfo.tagName}")
                     Preferences.latestOtaVersion = releaseInfo.tagName
@@ -92,13 +92,21 @@ object OtaUpdater {
      * Performs a network check against the GitHub latest release API using Retrofit.
      * Returns [com.kangrio.byd.assistant.data.ReleaseInfo] if a newer version is available, or null otherwise.
      */
-    suspend fun checkForUpdate(context: Context, force: Boolean = false): ReleaseInfo? = withContext(Dispatchers.IO) {
+    suspend fun checkForUpdate(context: Context, force: Boolean = false, preRelease: Boolean = false): ReleaseInfo? = withContext(Dispatchers.IO) {
         if (!shouldCheck(force)) {
             return@withContext null
         }
 
         try {
-            val release = gitHubApi.getLatestRelease(owner = "kangrio", repo = "Assistant")
+            val allReleases = gitHubApi.getAllReleases(owner = "kangrio", repo = "Assistant")
+            val release = allReleases.first {
+                if (preRelease) {
+                    it.prerelease
+                } else {
+                    !it.prerelease
+                }
+            }
+
             Preferences.lastOtaCheckTime = System.currentTimeMillis()
 
             val apkAsset = release.assets.firstOrNull { asset ->
@@ -151,8 +159,8 @@ object OtaUpdater {
      * Compares semantic versions (e.g. "1.0.3" > "1.0.2").
      */
     fun isNewerVersion(remote: String, current: String): Boolean {
-        val cleanRemote = remote.trim().removePrefix("v").removePrefix("V")
-        val cleanCurrent = current.trim().removePrefix("v").removePrefix("V")
+        val cleanRemote = remote.trim().removePrefix("v").removePrefix("V").replace("-beta", ".")
+        val cleanCurrent = current.trim().removePrefix("v").removePrefix("V").replace("-beta", ".")
 
         val remoteBase = cleanRemote.split("-")[0]
         val currentBase = cleanCurrent.split("-")[0]

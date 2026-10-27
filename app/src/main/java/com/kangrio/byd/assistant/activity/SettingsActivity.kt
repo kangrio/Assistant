@@ -129,6 +129,7 @@ class SettingsActivity : ComponentActivity() {
                         onSensitivityChange = { VoiceWakeService.setSensitivity(this, it) },
                         onModelChanged = { model -> VoiceWakeService.setModel(this, model) },
                         onModelDelete = { model ->  onModelDelete(model) },
+                        onUseBetaUpdate = { state -> Preferences.useBetaUpdate = state }
                     )
                 }
             }
@@ -192,6 +193,7 @@ fun SettingsScreen(
     onSensitivityChange: (Float) -> Unit = {},
     onModelChanged: (String) -> Unit = { _-> },
     onModelDelete: (String) -> Boolean = { _ -> false },
+    onUseBetaUpdate: (Boolean) -> Unit = {}
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -254,6 +256,8 @@ fun SettingsScreen(
     var showUpdateDialog by remember { mutableStateOf(initialOtaRelease != null) }
     var isDownloadingUpdate by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableFloatStateOf(0f) }
+
+    var isUseBetaUpdate by remember { mutableStateOf(Preferences.useBetaUpdate) }
 
     LaunchedEffect(lifecycleOwner) {
         while (true) {
@@ -561,6 +565,19 @@ fun SettingsScreen(
                 }
 
                 SettingRow(
+                    label = "Use Beta",
+                    description = "Enable beta features."
+                ) {
+                    Switch(
+                        checked = isUseBetaUpdate,
+                        onCheckedChange = {
+                            isUseBetaUpdate = it
+                            onUseBetaUpdate(it)
+                        }
+                    )
+                }
+
+                SettingRow(
                     label = "Check for Updates",
                     description = "Current version: v${OtaUpdater.getCurrentVersionName(context)}"
                 ) {
@@ -569,7 +586,7 @@ fun SettingsScreen(
                             if (isCheckingUpdate || isDownloadingUpdate) return@FilledTonalButton
                             isCheckingUpdate = true
                             scope.launch {
-                                val release = OtaUpdater.checkForUpdate(context, force = true)
+                                val release = OtaUpdater.checkForUpdate(context, force = true, preRelease = Preferences.useBetaUpdate)
                                 isCheckingUpdate = false
                                 if (release != null) {
                                     availableUpdate = release
