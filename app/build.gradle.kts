@@ -106,6 +106,7 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.accompanist.drawablepainter)
     implementation(project(":androidwakeword"))
+    implementation("com.github.kangrio:ShellServer:1.0.1")
 
     compileOnly(libs.onnxruntime.android)
 

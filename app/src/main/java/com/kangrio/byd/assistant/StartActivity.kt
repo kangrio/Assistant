@@ -17,7 +17,7 @@ class StartActivity : Activity() {
     override fun onResume() {
         super.onResume()
         if (Utils.setupCompleted(this)) {
-            Utils.startVoiceAssistant(this)
+            Utils.startVoiceAssistantViaAdb()
         } else {
             startActivity(Intent(this, PermissionOnboardingActivity::class.java))
         }

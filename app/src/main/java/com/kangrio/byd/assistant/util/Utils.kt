@@ -183,6 +183,10 @@ object Utils {
         }
     }
 
+    fun startVoiceAssistantViaAdb() {
+        ShellServer.exec("input keyevent 219")
+    }
+
     /**
      * Get the Notification Listener component name for a given package name.
      */
