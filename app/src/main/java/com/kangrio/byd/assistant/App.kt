@@ -1,6 +1,7 @@
 package com.kangrio.byd.assistant
 
 import android.app.Application
+import android.content.Context
 import com.kangrio.byd.assistant.ota.OtaUpdater
 import com.kangrio.byd.assistant.service.VoiceWakeService
 import com.kangrio.byd.assistant.util.Preferences
@@ -13,9 +14,14 @@ class App : Application() {
             return appContext!!
         }
     }
+
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+        appContext = this
+    }
+
     override fun onCreate() {
         super.onCreate()
-        appContext = this
         Preferences.init(this)
         OtaUpdater.createNotificationChannel(this)
         OtaUpdater.checkUpdateInBackground(this, force = false)
