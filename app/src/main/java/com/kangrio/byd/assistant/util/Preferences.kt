@@ -43,4 +43,8 @@ object Preferences {
     var latestOtaVersion: String
         get() = prefs.getString(Constant.PREFS_LATEST_OTA_VERSION, "") ?: ""
         set(value) = prefs.edit { putString(Constant.PREFS_LATEST_OTA_VERSION, value) }
+
+    var useBetaUpdate: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_USE_BETA_UPDATE, false)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_USE_BETA_UPDATE, value) }
 }

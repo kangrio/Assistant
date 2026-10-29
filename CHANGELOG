@@ -1,3 +1,7 @@
+- 1.0.5
+  • Start voice assistant via adb since chatgpt not exported AssistantActivity
+  • Now can use beta channel for OTA updates
+
 - 1.0.4
   • add configurable audio source for wake-word detection
   • improve ADB discovery and shell execution timeouts for better reliability

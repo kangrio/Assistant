@@ -15,6 +15,7 @@ dadb = "2.0.0"
 okhttp = "5.4.0"
 retrofit = "3.0.0"
 onnxruntimeAndroid = "1.23.2"
+shellserver = "1.0.2"
 
 [libraries]
 accompanist-drawablepainter = { module = "com.google.accompanist:accompanist-drawablepainter", version.ref = "accompanistDrawablepainter" }
@@ -39,6 +40,7 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 onnxruntime-android = { module = "com.microsoft.onnxruntime:onnxruntime-android", version.ref = "onnxruntimeAndroid" }
+shellserver = { module = "com.github.kangrio:ShellServer", version.ref = "shellserver" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

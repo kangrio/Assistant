@@ -147,6 +147,11 @@ object Utils {
      */
     fun startVoiceAssistant(context: Context) {
         try {
+            startVoiceAssistantViaAdb()
+            return
+        } catch (e: Throwable) {}
+
+        try {
             // Redirect through StartActivity when called from a non-Activity context
             if (context !is Activity) {
                 context.startActivity(
@@ -181,6 +186,10 @@ object Utils {
         } catch (e: Throwable) {
             Log.e("Utils", "startVoiceAssistant", e)
         }
+    }
+
+    fun startVoiceAssistantViaAdb() {
+        ShellServer.exec("input keyevent 219")
     }
 
     /**
