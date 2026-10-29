@@ -167,7 +167,7 @@ class VoiceWakeService : Service() {
             detector?.pause()
 
             withContext(Dispatchers.Main) {
-                Utils.startVoiceAssistantViaAdb()
+                Utils.startVoiceAssistant(this@VoiceWakeService)
             }
 
             delay(DEBOUNCE_DELAY_MS.milliseconds)

@@ -147,6 +147,11 @@ object Utils {
      */
     fun startVoiceAssistant(context: Context) {
         try {
+            startVoiceAssistantViaAdb()
+            return
+        } catch (e: Throwable) {}
+
+        try {
             // Redirect through StartActivity when called from a non-Activity context
             if (context !is Activity) {
                 context.startActivity(
