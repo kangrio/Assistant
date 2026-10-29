@@ -27,6 +27,8 @@ import com.kangrio.byd.assistant.Constant
 import com.kangrio.byd.assistant.R
 import com.kangrio.byd.assistant.StartActivity
 import com.kangrio.byd.assistant.data.AssistantApp
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 object Utils {
     private val soundPool = SoundPool.Builder()
@@ -145,10 +147,11 @@ object Utils {
     /**
      * Launch the currently selected voice assistant app.
      */
-    fun startVoiceAssistant(context: Context) {
+    fun startVoiceAssistant(context: Context) = MainScope().launch {
         try {
             startVoiceAssistantViaAdb()
-            return
+            playDing(context = context)
+            return@launch
         } catch (e: Throwable) {}
 
         try {
@@ -159,7 +162,7 @@ object Utils {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
                 )
-                return
+                return@launch
             }
 
             val assistantApp = getCurrentAssistantApp(context)
