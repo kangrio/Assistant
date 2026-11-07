@@ -8,8 +8,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val appVersionCode = 7
-val appVersionName = "1.0.6"
+val appVersionCode = 8
+val appVersionName = "1.0.7"
 
 val betaTags = providers.provider {
     providers.exec {

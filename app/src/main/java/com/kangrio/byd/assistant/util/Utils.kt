@@ -322,7 +322,7 @@ object Utils {
             Build.FINGERPRINT,
             Build.MODEL,
             Build.PRODUCT
-        ).any { it.contains("dilink", ignoreCase = true) }
+        ).any { it.contains("dilink", ignoreCase = true)  || it.contains("byd", ignoreCase = true)}
     }
 
     /**
