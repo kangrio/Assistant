@@ -4,6 +4,7 @@ package com.kangrio.byd.assistant.service
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
 import android.view.KeyEvent
@@ -32,6 +33,7 @@ class ButtonTriggerService : AccessibilityService() {
         serviceInfo = serviceInfo.apply {
             flags = flags or AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
         }
+        isServiceRunning = true
 
         triggerKeyCode = Preferences.triggerKeyCode
         Preferences.registerListener(prefsListener)
@@ -62,11 +64,28 @@ class ButtonTriggerService : AccessibilityService() {
         Utils.startVoiceAssistant(applicationContext)
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {}
-    override fun onInterrupt() {}
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        Log.d("ButtonTriggerService", "onAccessibilityEvent")
+    }
+    override fun onInterrupt() {
+        Log.d("ButtonTriggerService", "onInterrupt")
+    }
 
     override fun onDestroy() {
+        Log.d("ButtonTriggerService", "onDestroy")
         if (Preferences.isInitialized) Preferences.unregisterListener(prefsListener)
+        isServiceRunning = false
         super.onDestroy()
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        Log.d("ButtonTriggerService", "onUnbind")
+        isServiceRunning = false
+        return super.onUnbind(intent)
+    }
+
+    companion object {
+        @Volatile
+        var isServiceRunning = false
     }
 }

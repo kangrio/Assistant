@@ -24,7 +24,11 @@ import kotlinx.coroutines.SupervisorJob
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import com.kangrio.byd.assistant.ota.OtaUpdater
+import com.kangrio.byd.assistant.runnable.KillAppRunnable
+import com.kangrio.byd.assistant.util.ShellServer
+import com.kangrio.shellserver.client.ShellServerHelper
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
@@ -56,6 +60,19 @@ class VoiceWakeService : Service() {
 
         scope.launch {
             startHotwordDetection()
+        }
+        watchDogAccessibility()
+    }
+
+    fun watchDogAccessibility() {
+        scope.launch {
+            while (isActive) {
+                delay(5000.milliseconds)
+                if (Preferences.enabledButtonTrigger && !ButtonTriggerService.isServiceRunning) {
+                    ShellServerHelper.keepAliveClient()
+                    ShellServer.runOnce(KillAppRunnable(packageName), 1000)
+                }
+            }
         }
     }
 
