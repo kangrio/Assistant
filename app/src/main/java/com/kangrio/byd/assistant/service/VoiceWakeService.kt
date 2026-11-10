@@ -69,8 +69,7 @@ class VoiceWakeService : Service() {
             while (isActive) {
                 delay(5000.milliseconds)
                 if (Preferences.enabledButtonTrigger && !ButtonTriggerService.isServiceRunning) {
-                    ShellServerHelper.keepAliveClient()
-                    ShellServer.runOnce(KillAppRunnable(packageName), 1000)
+                    ShellServer.reStartApp()
                 }
             }
         }
