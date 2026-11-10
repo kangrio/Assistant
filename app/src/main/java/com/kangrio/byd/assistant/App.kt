@@ -4,7 +4,11 @@ import android.app.Application
 import android.content.Context
 import com.kangrio.byd.assistant.ota.OtaUpdater
 import com.kangrio.byd.assistant.service.VoiceWakeService
+import com.kangrio.byd.assistant.util.AccessibilityUtil
 import com.kangrio.byd.assistant.util.Preferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class App : Application() {
     companion object {
@@ -26,5 +30,11 @@ class App : Application() {
         OtaUpdater.createNotificationChannel(this)
         OtaUpdater.checkUpdateInBackground(this, force = false)
         VoiceWakeService.startService(this)
+
+        if (!Preferences.enabledButtonTrigger) return
+        Preferences.captureMode = false
+        CoroutineScope(Dispatchers.Default).launch {
+            AccessibilityUtil.reEnable(this@App, delayMs = 1000)
+        }
     }
 }

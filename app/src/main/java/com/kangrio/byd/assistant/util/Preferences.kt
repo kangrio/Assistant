@@ -8,9 +8,19 @@ import androidx.core.content.edit
 
 object Preferences {
     lateinit var prefs: SharedPreferences
+    const val KEYCODE_NONE = -1
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
     }
+
+    val isInitialized get() = ::prefs.isInitialized
+
+    fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.registerOnSharedPreferenceChangeListener(l)
+
+    fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.unregisterOnSharedPreferenceChangeListener(l)
 
     var assistantPackageComponent: String
         get() = prefs.getString(Constant.PREFS_ASSISTANT_PACKAGE_COMPONENT, "") ?: ""
@@ -47,4 +57,20 @@ object Preferences {
     var useBetaUpdate: Boolean
         get() = prefs.getBoolean(Constant.PREFS_USE_BETA_UPDATE, false)
         set(value) = prefs.edit { putBoolean(Constant.PREFS_USE_BETA_UPDATE, value) }
+
+    var enabledButtonTrigger: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_ENABLED_BUTTON_TRIGGER, false)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_ENABLED_BUTTON_TRIGGER, value) }
+
+    var triggerKeyCode: Int
+        get() = prefs.getInt(Constant.PREFS_TRIGGER_KEYCODE, KEYCODE_NONE)
+        set(value) = prefs.edit { putInt(Constant.PREFS_TRIGGER_KEYCODE, value) }
+
+    var captureMode: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_CAPTURE_MODE, false)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_CAPTURE_MODE, value) }
+
+    var blockOriginalAction: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_BLOCK_ORIGINAL, true)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_BLOCK_ORIGINAL, value) }
 }
