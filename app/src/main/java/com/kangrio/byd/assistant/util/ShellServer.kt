@@ -3,9 +3,9 @@ package com.kangrio.byd.assistant.util
 import android.os.IBinder
 import android.util.Log
 import com.kangrio.byd.assistant.App
-import com.kangrio.byd.assistant.BuildConfig
-import com.kangrio.byd.assistant.runnable.KillAppRunnable
+import com.kangrio.byd.assistant.runnable.RestartAppRunnable
 import com.kangrio.shellserver.client.ShellServerHelper
+import com.kangrio.shellserver.client.WakeUpActivity
 import com.kangrio.shellserver.shared.ShellServerRunnable
 
 object ShellServer {
@@ -50,20 +50,9 @@ object ShellServer {
     }
 
     fun reStartApp() {
-        if (isConnected()) {
-            ShellServerHelper.keepAliveClient()
-            runOnce(KillAppRunnable(BuildConfig.APPLICATION_ID), 1000)
-            return
-        }
-
-        ShellServerHelper.init(App.get()) {
-            try {
-                binder = it
-                ShellServerHelper.keepAliveClient()
-                runOnce(KillAppRunnable(BuildConfig.APPLICATION_ID), 1000)
-            } catch (e: Throwable) {
-            }
-        }
+        val packageName = App.get().packageName
+        val activityName = WakeUpActivity::class.java.name
+        runOnce(RestartAppRunnable(packageName, activityName), 100)
     }
 
     fun schedule(runnable: ShellServerRunnable, delay: Long, period: Long) {
