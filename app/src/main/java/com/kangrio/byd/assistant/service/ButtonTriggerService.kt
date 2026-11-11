@@ -42,7 +42,7 @@ class ButtonTriggerService : AccessibilityService() {
     override fun onKeyEvent(event: KeyEvent): Boolean {
         // Capture mode: save whatever is pressed and block it
         if (Preferences.captureMode) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            if (event.action == Preferences.keyEventAction && event.repeatCount == 0) {
                 Preferences.triggerKeyCode = event.keyCode
                 Preferences.captureMode = false
             }
@@ -52,7 +52,7 @@ class ButtonTriggerService : AccessibilityService() {
         val target = triggerKeyCode
         if (target == Preferences.KEYCODE_NONE || event.keyCode != target) return false
 
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+        if (event.action == Preferences.keyEventAction && event.repeatCount == 0) {
             onTriggered()
         }
 

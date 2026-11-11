@@ -22,4 +22,5 @@ object Constant {
     const val PREFS_TRIGGER_KEYCODE = "trigger_keycode"
     const val PREFS_CAPTURE_MODE = "capture_mode"
     const val PREFS_BLOCK_ORIGINAL = "block_original_action"
+    const val PREFS_BUTTON_TRIGGER_ACTION = "button_trigger_action"
 }

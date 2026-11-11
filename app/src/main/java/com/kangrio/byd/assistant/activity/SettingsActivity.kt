@@ -986,6 +986,7 @@ fun ButtonTriggerDialogHost(onDismiss: () -> Unit) {
     var keyCode by remember { mutableIntStateOf(Preferences.triggerKeyCode) }
     var listening by remember { mutableStateOf(false) }
     var block by remember { mutableStateOf(Preferences.blockOriginalAction) }
+    var eventAction by remember { mutableIntStateOf(Preferences.keyEventAction) }
 
     // Re-check when returning from system Accessibility settings
     DisposableEffect(lifecycleOwner) {
@@ -1031,6 +1032,8 @@ fun ButtonTriggerDialogHost(onDismiss: () -> Unit) {
         },
         blockOriginal = block,
         onBlockOriginalChange = { block = it; Preferences.blockOriginalAction = it },
+        keyEventAction = eventAction,
+        onKeyEventActionChange = { eventAction = it; Preferences.keyEventAction = it }
     )
 }
 

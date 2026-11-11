@@ -30,6 +30,8 @@ fun AccessibilitySetupDialog(
     onCancelListen: () -> Unit,
     blockOriginal: Boolean,
     onBlockOriginalChange: (Boolean) -> Unit,
+    keyEventAction: Int,
+    onKeyEventActionChange: (Int) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -70,6 +72,22 @@ fun AccessibilitySetupDialog(
                         enabled = enabled // capture needs the service running
                     ) {
                         Text(if (listening) "Cancel" else "Listen")
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Key event action")
+                    FilledTonalButton(
+                        onClick = {
+                            onKeyEventActionChange(if (keyEventAction == KeyEvent.ACTION_UP) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP)
+                        },
+                        enabled = enabled
+                    ) {
+                        Text(if (keyEventAction == KeyEvent.ACTION_UP) "Action Up" else "Action Down")
                     }
                 }
 

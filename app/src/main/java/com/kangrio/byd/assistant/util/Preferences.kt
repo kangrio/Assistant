@@ -3,6 +3,7 @@ package com.kangrio.byd.assistant.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.media.MediaRecorder
+import android.view.KeyEvent
 import com.kangrio.byd.assistant.Constant
 import androidx.core.content.edit
 
@@ -61,6 +62,10 @@ object Preferences {
     var enabledButtonTrigger: Boolean
         get() = prefs.getBoolean(Constant.PREFS_ENABLED_BUTTON_TRIGGER, false)
         set(value) = prefs.edit { putBoolean(Constant.PREFS_ENABLED_BUTTON_TRIGGER, value) }
+
+    var keyEventAction: Int
+        get() = prefs.getInt(Constant.PREFS_BUTTON_TRIGGER_ACTION, KeyEvent.ACTION_UP)
+        set(value) = prefs.edit { putInt(Constant.PREFS_BUTTON_TRIGGER_ACTION, value) }
 
     var triggerKeyCode: Int
         get() = prefs.getInt(Constant.PREFS_TRIGGER_KEYCODE, KEYCODE_NONE)
