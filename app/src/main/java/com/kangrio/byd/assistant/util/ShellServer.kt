@@ -30,6 +30,12 @@ object ShellServer {
         if (isInitialiizing) {
             return
         }
+        if (isConnected()) {
+            pendingInit.forEach { it(binder!!) }
+            pendingInit.clear()
+            return
+        }
+
         isInitialiizing = true
         scope.launch {
             ShellServerHelper.init(App.get()) { iBinder ->
