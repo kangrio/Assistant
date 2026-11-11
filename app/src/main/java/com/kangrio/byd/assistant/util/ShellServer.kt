@@ -18,6 +18,16 @@ object ShellServer {
         return connected
     }
 
+    fun init(onConnected: (IBinder) -> Unit) {
+        ShellServerHelper.init(App.get()) {
+            binder = it
+            try {
+                onConnected(binder!!)
+            } catch (e: Throwable) {
+            }
+        }
+    }
+
     fun exec(cmd: String) {
         Log.d("ShellServer", "exec: $cmd")
         if (isConnected()) {
@@ -25,12 +35,8 @@ object ShellServer {
             return
         }
 
-        ShellServerHelper.init(App.get()) {
-            try {
-                binder = it
-                ShellServerHelper.exec(cmd)
-            } catch (e: Throwable) {
-            }
+        init {
+            ShellServerHelper.exec(cmd)
         }
     }
 
@@ -40,12 +46,8 @@ object ShellServer {
             return
         }
 
-        ShellServerHelper.init(App.get()) {
-            try {
-                binder = it
-                ShellServerHelper.runOnce(runnable, delay)
-            } catch (e: Throwable) {
-            }
+        init {
+            ShellServerHelper.runOnce(runnable, delay)
         }
     }
 
@@ -61,12 +63,8 @@ object ShellServer {
             return
         }
 
-        ShellServerHelper.init(App.get()) {
-            try {
-                binder = it
-                ShellServerHelper.schedule(runnable, delay, period)
-            } catch (e: Throwable) {
-            }
+        init {
+            ShellServerHelper.schedule(runnable, delay, period)
         }
     }
 }
