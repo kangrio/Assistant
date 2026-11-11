@@ -16,6 +16,8 @@ object ShellServer {
     @Volatile
     private var binder: IBinder? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var isInitialiizing = false
+    private val pendingInit = mutableListOf<(IBinder) -> Unit>()
 
     fun isConnected(): Boolean {
         val connected = binder != null && binder?.isBinderAlive == true
@@ -24,15 +26,18 @@ object ShellServer {
     }
 
     fun init(onConnected: (IBinder) -> Unit) {
-        if (isConnected()) {
-            onConnected(binder!!)
+        pendingInit.add(onConnected)
+        if (isInitialiizing) {
             return
         }
+        isInitialiizing = true
         scope.launch {
-            ShellServerHelper.init(App.get()) {
-                binder = it
+            ShellServerHelper.init(App.get()) { iBinder ->
+                binder = iBinder
                 try {
-                    onConnected(binder!!)
+                    pendingInit.forEach { it(binder!!) }
+                    pendingInit.clear()
+                    isInitialiizing = false
                 } catch (e: Throwable) {
                 }
             }
