@@ -31,6 +31,7 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
 object Utils {
+    val scope = MainScope()
     private val soundPool = SoundPool.Builder()
         .setMaxStreams(1)
         .build()
@@ -131,16 +132,22 @@ object Utils {
     /**
      * Play a ding sound when Voice Assistant app is launched.
      */
-    private fun playDing(context: Context) {
+    private fun playDing(context: Context, delayMs: Long = 0) {
         if (!Preferences.playDingOnStart) return
 
         if (dingSound == -1) {
             dingSound = soundPool.load(context, R.raw.ding, 1)
             soundPool.setOnLoadCompleteListener { pool, i, i1 ->
-                soundPool.play(dingSound, 1f, 1f, 0, 0, 1f)
+                scope.launch {
+                    delay(delayMs.milliseconds)
+                    soundPool.play(dingSound, 1f, 1f, 0, 0, 1f)
+                }
             }
         } else {
-            soundPool.play(dingSound, 1f, 1f, 0, 0, 1f)
+            scope.launch {
+                delay(delayMs.milliseconds)
+                soundPool.play(dingSound, 1f, 1f, 0, 0, 1f)
+            }
         }
     }
 
@@ -150,7 +157,7 @@ object Utils {
     fun startVoiceAssistant(context: Context) = MainScope().launch {
         try {
             startVoiceAssistantViaAdb()
-            playDing(context = context)
+            playDing(context = context, delayMs = 1000)
             return@launch
         } catch (e: Throwable) {}
 
@@ -185,7 +192,7 @@ object Utils {
             }
 
             context.startActivity(intent)
-            playDing(context)
+            playDing(context, delayMs = 1000)
         } catch (e: Throwable) {
             Log.e("Utils", "startVoiceAssistant", e)
         }
