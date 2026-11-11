@@ -7,10 +7,15 @@ import com.kangrio.byd.assistant.runnable.RestartAppRunnable
 import com.kangrio.shellserver.client.ShellServerHelper
 import com.kangrio.shellserver.client.WakeUpActivity
 import com.kangrio.shellserver.shared.ShellServerRunnable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 object ShellServer {
     @Volatile
     private var binder: IBinder? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun isConnected(): Boolean {
         val connected = binder != null && binder?.isBinderAlive == true
@@ -19,11 +24,17 @@ object ShellServer {
     }
 
     fun init(onConnected: (IBinder) -> Unit) {
-        ShellServerHelper.init(App.get()) {
-            binder = it
-            try {
-                onConnected(binder!!)
-            } catch (e: Throwable) {
+        if (isConnected()) {
+            onConnected(binder!!)
+            return
+        }
+        scope.launch {
+            ShellServerHelper.init(App.get()) {
+                binder = it
+                try {
+                    onConnected(binder!!)
+                } catch (e: Throwable) {
+                }
             }
         }
     }
