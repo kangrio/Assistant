@@ -66,11 +66,12 @@ class VoiceWakeService : Service() {
 
     fun watchDogAccessibility() {
         scope.launch {
+            delay(5000.milliseconds)
             while (isActive) {
-                delay(5000.milliseconds)
                 if (Preferences.enabledButtonTrigger && !ButtonTriggerService.isServiceRunning) {
                     ShellServer.reStartApp()
                 }
+                delay(2000.milliseconds)
             }
         }
     }
