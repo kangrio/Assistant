@@ -8,8 +8,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val appVersionCode = 8
-val appVersionName = "1.0.7"
+val appVersionCode = 9
+val appVersionName = "1.0.8"
 
 val betaTags = providers.provider {
     providers.exec {
@@ -83,6 +83,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }

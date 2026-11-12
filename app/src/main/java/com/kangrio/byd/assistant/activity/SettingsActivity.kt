@@ -2,6 +2,7 @@ package com.kangrio.byd.assistant.activity
 
 import android.Manifest
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -48,19 +49,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import com.kangrio.byd.assistant.data.OnlineWakeWordModel
-import com.kangrio.byd.assistant.data.ReleaseInfo
-import com.kangrio.byd.assistant.ota.OtaUpdater
-import com.kangrio.byd.assistant.service.VoiceWakeService
-import com.kangrio.byd.assistant.ui.composable.AppIcon
-import com.kangrio.byd.assistant.ui.theme.AssistantTheme
-import com.kangrio.byd.assistant.util.Preferences
-import com.kangrio.byd.assistant.util.Utils
-import com.kangrio.byd.assistant.util.WakeWordModelManager
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -75,7 +69,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.kangrio.byd.assistant.Constant
+import com.kangrio.byd.assistant.compose.dialog.AccessibilitySetupDialog
+import com.kangrio.byd.assistant.compose.dialog.AssistantSelectorDialog
+import com.kangrio.byd.assistant.data.OnlineWakeWordModel
+import com.kangrio.byd.assistant.data.ReleaseInfo
+import com.kangrio.byd.assistant.ota.OtaUpdater
+import com.kangrio.byd.assistant.service.VoiceWakeService
+import com.kangrio.byd.assistant.ui.composable.AppIcon
+import com.kangrio.byd.assistant.ui.theme.AssistantTheme
+import com.kangrio.byd.assistant.util.AccessibilityUtil
+import com.kangrio.byd.assistant.util.Preferences
+import com.kangrio.byd.assistant.util.Utils
+import com.kangrio.byd.assistant.util.WakeWordModelManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -128,7 +138,7 @@ class SettingsActivity : ComponentActivity() {
                         onAudioSourceChange = { source -> VoiceWakeService.setAudioSource(this, source) },
                         onSensitivityChange = { VoiceWakeService.setSensitivity(this, it) },
                         onModelChanged = { model -> VoiceWakeService.setModel(this, model) },
-                        onModelDelete = { model ->  onModelDelete(model) },
+                        onModelDelete = { model -> onModelDelete(model) },
                         onUseBetaUpdate = { state -> Preferences.useBetaUpdate = state }
                     )
                 }
@@ -191,7 +201,7 @@ fun SettingsScreen(
     onPlayDingToggle: (Boolean) -> Unit = {},
     onAudioSourceChange: (Int) -> Unit = {},
     onSensitivityChange: (Float) -> Unit = {},
-    onModelChanged: (String) -> Unit = { _-> },
+    onModelChanged: (String) -> Unit = { _ -> },
     onModelDelete: (String) -> Boolean = { _ -> false },
     onUseBetaUpdate: (Boolean) -> Unit = {}
 ) {
@@ -243,10 +253,10 @@ fun SettingsScreen(
     }
 
     var expandedAudioSource by remember { mutableStateOf(false) }
-    var selectedAudioSource by remember { mutableStateOf(AUDIO_SOURCE_OPTIONS.firstOrNull { (_, s) -> s == Preferences.micAudioSource }?.first ?: "Default" ) }
+    var selectedAudioSource by remember { mutableStateOf(AUDIO_SOURCE_OPTIONS.firstOrNull { (_, s) -> s == Preferences.micAudioSource }?.first ?: "Default") }
 
     var expandedSensitivity by remember { mutableStateOf(false) }
-    var selectedSensitivityLevel by remember { mutableStateOf(SENSITIVITY_OPTIONS.firstOrNull { (_, s) -> s == Preferences.hotwordSensitivity }?.first ?: "" ) }
+    var selectedSensitivityLevel by remember { mutableStateOf(SENSITIVITY_OPTIONS.firstOrNull { (_, s) -> s == Preferences.hotwordSensitivity }?.first ?: "") }
 
     var isStateOn by remember { mutableStateOf(Preferences.startHotword) }
     var isPlayDing by remember { mutableStateOf(Preferences.playDingOnStart) }
@@ -256,6 +266,8 @@ fun SettingsScreen(
     var showUpdateDialog by remember { mutableStateOf(initialOtaRelease != null) }
     var isDownloadingUpdate by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableFloatStateOf(0f) }
+
+    var showAccessibilityDialog by remember { mutableStateOf(false) }
 
     var isUseBetaUpdate by remember { mutableStateOf(Preferences.useBetaUpdate) }
 
@@ -304,17 +316,17 @@ fun SettingsScreen(
                     label = "Assistant app",
                     description = "Select the assistant app to use."
                 ) {
-                        FilledTonalButton(
-                            onClick = {
-                                if (!isWriteSecureSettingsGranted) {
-                                    Toast.makeText(context, "Write Secure Settings permission is required", Toast.LENGTH_SHORT).show()
-                                    return@FilledTonalButton
-                                }
-                                showAssistantDialog = true
+                    FilledTonalButton(
+                        onClick = {
+                            if (!isWriteSecureSettingsGranted) {
+                                Toast.makeText(context, "Write Secure Settings permission is required", Toast.LENGTH_SHORT).show()
+                                return@FilledTonalButton
                             }
-                        ) {
-                            Text(selectedAssistantApp.name)
+                            showAssistantDialog = true
                         }
+                    ) {
+                        Text(selectedAssistantApp.name)
+                    }
                 }
                 if (Utils.getNotificationListenerComponentName(context, selectedAssistantApp.packageName) != null) {
                     SettingRow(
@@ -332,6 +344,19 @@ fun SettingsScreen(
                         ) {
                             Text("Grant")
                         }
+                    }
+                }
+
+                SettingRow(
+                    label = "Button Trigger",
+                    description = "Remap the button to trigger the Assistant app."
+                ) {
+                    FilledTonalButton(
+                        onClick = {
+                            showAccessibilityDialog = true
+                        }
+                    ) {
+                        Text("Setup")
                     }
                 }
 
@@ -458,7 +483,7 @@ fun SettingsScreen(
                                                                 }
                                                             }
                                                         }
-                                                ),
+                                                    ),
                                             )
                                         },
                                         onClick = { }
@@ -617,43 +642,26 @@ fun SettingsScreen(
         }
     }
 
+    if (showAccessibilityDialog) {
+        ButtonTriggerDialogHost(
+            onDismiss = {
+                showAccessibilityDialog = false
+            }
+        )
+    }
+
     if (showAssistantDialog) {
-        AlertDialog(
-            onDismissRequest = { showAssistantDialog = false },
-            title = {
-                Text("Select Assistant App")
+        AssistantSelectorDialog(
+            assistantApps,
+            onDismiss = {
+                showAssistantDialog = false
             },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    assistantApps.forEach { assistant ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showAssistantDialog = false
-                                    Utils.enableVoiceAssistant(context, assistant.componentName)
-                                    Preferences.assistantPackageComponent = assistant.componentName
-                                    selectedAssistantApp = assistant
-                                }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            AppIcon(
-                                packageName = assistant.packageName,
-                                modifier = Modifier.size(40.dp)
-                            )
-
-                            Spacer(Modifier.width(12.dp))
-
-                            Text(assistant.name)
-                        }
-                    }
-                }
-            },
-            confirmButton = {}
+            onSelected = { assistant ->
+                showAssistantDialog = false
+                Utils.enableVoiceAssistant(context, assistant.componentName)
+                Preferences.assistantPackageComponent = assistant.componentName
+                selectedAssistantApp = assistant
+            }
         )
     }
 
@@ -902,7 +910,11 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(end = 8.dp)
+                                    ) {
                                         Text(
                                             text = model.fileName,
                                             style = MaterialTheme.typography.bodyMedium,
@@ -967,6 +979,78 @@ fun SettingsScreen(
 }
 
 @Composable
+fun ButtonTriggerDialogHost(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var enabled by remember { mutableStateOf(AccessibilityUtil.isEnabled(context)) }
+    var keyCodes by remember { mutableStateOf(Preferences.triggerKeyCodes) }
+    var listening by remember { mutableStateOf(false) }
+    var block by remember { mutableStateOf(Preferences.blockOriginalAction) }
+    var eventAction by remember { mutableIntStateOf(Preferences.keyEventAction) }
+
+    // Re-check when returning from system Accessibility settings
+    DisposableEffect(lifecycleOwner) {
+        val obs = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) enabled = AccessibilityUtil.isEnabled(context)
+        }
+        lifecycleOwner.lifecycle.addObserver(obs)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(obs) }
+    }
+
+    // The service writes the captured key to prefs; reflect it here
+    DisposableEffect(Unit) {
+        val l = SharedPreferences.OnSharedPreferenceChangeListener { _, k ->
+            when (k) {
+                Constant.PREFS_TRIGGER_KEYCODES -> {
+                    keyCodes = Preferences.triggerKeyCodes
+
+                    if (keyCodes.isNotEmpty()) {
+                        lifecycleOwner.lifecycleScope.launch {
+                            delay(1000.milliseconds)
+                            Preferences.captureMode = false
+                            listening = false
+                        }
+                    }
+                }
+
+                Constant.PREFS_CAPTURE_MODE -> listening = Preferences.captureMode
+            }
+        }
+        Preferences.registerListener(l)
+        onDispose {
+            Preferences.unregisterListener(l)
+            Preferences.captureMode = false // never leave capture on
+        }
+    }
+
+    AccessibilitySetupDialog(
+        onDismiss = onDismiss,
+        enabled = enabled,
+        onEnabledChange = {
+            Preferences.enabledButtonTrigger = it
+            AccessibilityUtil.setEnabled(context, it)
+            enabled = AccessibilityUtil.isEnabled(context)
+        },
+        triggerKeyCodes = keyCodes,
+        listening = listening,
+        onListen = {
+            Preferences.triggerKeyCodes = emptyList() // start fresh
+            Preferences.captureMode = true
+            listening = true
+        },
+        onDone = {
+            Preferences.captureMode = false
+            listening = false
+        },
+        blockOriginal = block,
+        onBlockOriginalChange = { block = it; Preferences.blockOriginalAction = it },
+        keyEventAction = eventAction,
+        onKeyEventActionChange = { eventAction = it; Preferences.keyEventAction = it }
+    )
+}
+
+@Composable
 private fun TitlePill(text: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
@@ -1014,18 +1098,18 @@ private fun SettingRow(
 }
 
 private val SENSITIVITY_OPTIONS: List<Pair<String, Float>> = listOf(
-    "Easiest"   to 0.05f,
-    "Easy"      to 0.2f,
-    "Balanced"  to 0.5f,
-    "Strict"    to 0.7f
+    "Easiest" to 0.05f,
+    "Easy" to 0.2f,
+    "Balanced" to 0.5f,
+    "Strict" to 0.7f
 )
 
 private val AUDIO_SOURCE_OPTIONS: List<Pair<String, Int>> = listOf(
-    "Default"      to MediaRecorder.AudioSource.DEFAULT,
-    "Mic"          to MediaRecorder.AudioSource.MIC,
-    "CamCorder"    to MediaRecorder.AudioSource.CAMCORDER,
-    "Recognize"    to MediaRecorder.AudioSource.VOICE_RECOGNITION,
-    "Unprocessed"  to MediaRecorder.AudioSource.UNPROCESSED,
+    "Default" to MediaRecorder.AudioSource.DEFAULT,
+    "Mic" to MediaRecorder.AudioSource.MIC,
+    "CamCorder" to MediaRecorder.AudioSource.CAMCORDER,
+    "Recognize" to MediaRecorder.AudioSource.VOICE_RECOGNITION,
+    "Unprocessed" to MediaRecorder.AudioSource.UNPROCESSED,
 )
 
 @Preview(showBackground = true, widthDp = 480, heightDp = 480)

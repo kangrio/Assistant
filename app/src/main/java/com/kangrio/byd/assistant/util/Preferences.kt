@@ -3,14 +3,25 @@ package com.kangrio.byd.assistant.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.media.MediaRecorder
+import android.view.KeyEvent
 import com.kangrio.byd.assistant.Constant
 import androidx.core.content.edit
 
 object Preferences {
     lateinit var prefs: SharedPreferences
+    const val KEYCODE_NONE = -1
+
     fun init(context: Context) {
         prefs = context.getSharedPreferences(context.packageName, Context.MODE_PRIVATE)
     }
+
+    val isInitialized get() = ::prefs.isInitialized
+
+    fun registerListener(l: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.registerOnSharedPreferenceChangeListener(l)
+
+    fun unregisterListener(l: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.unregisterOnSharedPreferenceChangeListener(l)
 
     var assistantPackageComponent: String
         get() = prefs.getString(Constant.PREFS_ASSISTANT_PACKAGE_COMPONENT, "") ?: ""
@@ -47,4 +58,27 @@ object Preferences {
     var useBetaUpdate: Boolean
         get() = prefs.getBoolean(Constant.PREFS_USE_BETA_UPDATE, false)
         set(value) = prefs.edit { putBoolean(Constant.PREFS_USE_BETA_UPDATE, value) }
+
+    var enabledButtonTrigger: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_ENABLED_BUTTON_TRIGGER, false)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_ENABLED_BUTTON_TRIGGER, value) }
+
+    var keyEventAction: Int
+        get() = prefs.getInt(Constant.PREFS_BUTTON_TRIGGER_ACTION, KeyEvent.ACTION_UP)
+        set(value) = prefs.edit { putInt(Constant.PREFS_BUTTON_TRIGGER_ACTION, value) }
+
+    var triggerKeyCodes: List<Int>
+        get() = prefs.getString(Constant.PREFS_TRIGGER_KEYCODES, "")
+            .orEmpty().split(',').mapNotNull { it.toIntOrNull() }
+        set(value) = prefs.edit {
+            putString(Constant.PREFS_TRIGGER_KEYCODES, value.distinct().joinToString(","))
+        }
+
+    var captureMode: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_CAPTURE_MODE, false)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_CAPTURE_MODE, value) }
+
+    var blockOriginalAction: Boolean
+        get() = prefs.getBoolean(Constant.PREFS_BLOCK_ORIGINAL, true)
+        set(value) = prefs.edit { putBoolean(Constant.PREFS_BLOCK_ORIGINAL, value) }
 }

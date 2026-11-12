@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Assistant</string>
+    <string name="button_trigger_service_desc">Button trigger</string>
 </resources>

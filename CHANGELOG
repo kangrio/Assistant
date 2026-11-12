@@ -1,3 +1,9 @@
+- 1.0.8
+  • Add button trigger feature to remap hardware key presses
+
+- 1.0.7
+  • fixed check 'byd' in build properties for device detection
+
 - 1.0.6
   • fixed crash to launch when cannot connect to adb
 

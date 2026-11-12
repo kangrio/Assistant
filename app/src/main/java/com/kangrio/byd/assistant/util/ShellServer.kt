@@ -3,30 +3,93 @@ package com.kangrio.byd.assistant.util
 import android.os.IBinder
 import android.util.Log
 import com.kangrio.byd.assistant.App
+import com.kangrio.byd.assistant.runnable.RestartAppRunnable
 import com.kangrio.shellserver.client.ShellServerHelper
+import com.kangrio.shellserver.client.WakeUpActivity
+import com.kangrio.shellserver.shared.ShellServerRunnable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 object ShellServer {
     @Volatile
     private var binder: IBinder? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var isInitialiizing = false
+    private val pendingInit = mutableListOf<(IBinder) -> Unit>()
 
     fun isConnected(): Boolean {
-        val connected = binder != null
+        val connected = binder != null && binder?.isBinderAlive == true
         Log.d("ShellServer", "isConnected: $connected")
         return connected
     }
 
-    fun exec(cmd: String) {
+    fun init(onConnected: (IBinder) -> Unit) {
+        pendingInit.add(onConnected)
+        if (isInitialiizing) {
+            return
+        }
         if (isConnected()) {
-            ShellServerHelper.exec(cmd)
+            pendingInit.forEach { it(binder!!) }
+            pendingInit.clear()
             return
         }
 
-        ShellServerHelper.init(App.get()) {
+        isInitialiizing = true
+        scope.launch {
             try {
-                binder = it
-                ShellServerHelper.exec(cmd)
+                ShellServerHelper.init(App.get()) { iBinder ->
+                    binder = iBinder
+                    try {
+                        pendingInit.forEach { it(binder!!) }
+                    } catch (e: Throwable) {
+                    }
+                    pendingInit.clear()
+                    isInitialiizing = false
+                }
             } catch (e: Throwable) {
             }
+        }
+    }
+
+    fun exec(cmd: String) = scope.launch {
+        Log.d("ShellServer", "exec: $cmd")
+        if (isConnected()) {
+            ShellServerHelper.exec(cmd)
+            return@launch
+        }
+
+        init {
+            ShellServerHelper.exec(cmd)
+        }
+    }
+
+    fun runOnce(runnable: ShellServerRunnable, delay: Long) = scope.launch {
+        if (isConnected()) {
+            ShellServerHelper.runOnce(runnable, delay)
+            return@launch
+        }
+
+        init {
+            ShellServerHelper.runOnce(runnable, delay)
+        }
+    }
+
+    fun reStartApp() = scope.launch {
+        val packageName = App.get().packageName
+        val activityName = WakeUpActivity::class.java.name
+        runOnce(RestartAppRunnable(packageName, activityName), 100)
+    }
+
+    fun schedule(runnable: ShellServerRunnable, delay: Long, period: Long) = scope.launch {
+        if (isConnected()) {
+            ShellServerHelper.schedule(runnable, delay, period)
+            return@launch
+        }
+
+        init {
+            ShellServerHelper.schedule(runnable, delay, period)
         }
     }
 }
