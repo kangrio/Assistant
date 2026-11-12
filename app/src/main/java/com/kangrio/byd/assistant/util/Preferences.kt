@@ -67,9 +67,12 @@ object Preferences {
         get() = prefs.getInt(Constant.PREFS_BUTTON_TRIGGER_ACTION, KeyEvent.ACTION_UP)
         set(value) = prefs.edit { putInt(Constant.PREFS_BUTTON_TRIGGER_ACTION, value) }
 
-    var triggerKeyCode: Int
-        get() = prefs.getInt(Constant.PREFS_TRIGGER_KEYCODE, KEYCODE_NONE)
-        set(value) = prefs.edit { putInt(Constant.PREFS_TRIGGER_KEYCODE, value) }
+    var triggerKeyCodes: List<Int>
+        get() = prefs.getString(Constant.PREFS_TRIGGER_KEYCODES, "")
+            .orEmpty().split(',').mapNotNull { it.toIntOrNull() }
+        set(value) = prefs.edit {
+            putString(Constant.PREFS_TRIGGER_KEYCODES, value.distinct().joinToString(","))
+        }
 
     var captureMode: Boolean
         get() = prefs.getBoolean(Constant.PREFS_CAPTURE_MODE, false)

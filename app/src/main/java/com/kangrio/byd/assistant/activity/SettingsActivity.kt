@@ -72,6 +72,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.kangrio.byd.assistant.Constant
 import com.kangrio.byd.assistant.compose.dialog.AccessibilitySetupDialog
 import com.kangrio.byd.assistant.compose.dialog.AssistantSelectorDialog
@@ -983,7 +984,7 @@ fun ButtonTriggerDialogHost(onDismiss: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     var enabled by remember { mutableStateOf(AccessibilityUtil.isEnabled(context)) }
-    var keyCode by remember { mutableIntStateOf(Preferences.triggerKeyCode) }
+    var keyCodes by remember { mutableStateOf(Preferences.triggerKeyCodes) }
     var listening by remember { mutableStateOf(false) }
     var block by remember { mutableStateOf(Preferences.blockOriginalAction) }
     var eventAction by remember { mutableIntStateOf(Preferences.keyEventAction) }
@@ -1001,7 +1002,18 @@ fun ButtonTriggerDialogHost(onDismiss: () -> Unit) {
     DisposableEffect(Unit) {
         val l = SharedPreferences.OnSharedPreferenceChangeListener { _, k ->
             when (k) {
-                Constant.PREFS_TRIGGER_KEYCODE -> keyCode = Preferences.triggerKeyCode
+                Constant.PREFS_TRIGGER_KEYCODES -> {
+                    keyCodes = Preferences.triggerKeyCodes
+
+                    if (keyCodes.isNotEmpty()) {
+                        lifecycleOwner.lifecycleScope.launch {
+                            delay(1000.milliseconds)
+                            Preferences.captureMode = false
+                            listening = false
+                        }
+                    }
+                }
+
                 Constant.PREFS_CAPTURE_MODE -> listening = Preferences.captureMode
             }
         }
@@ -1020,14 +1032,15 @@ fun ButtonTriggerDialogHost(onDismiss: () -> Unit) {
             AccessibilityUtil.setEnabled(context, it)
             enabled = AccessibilityUtil.isEnabled(context)
         },
-        triggerKeyCode = keyCode,
+        triggerKeyCodes = keyCodes,
         listening = listening,
         onListen = {
-            Preferences.captureMode = true;
+            Preferences.triggerKeyCodes = emptyList() // start fresh
+            Preferences.captureMode = true
             listening = true
         },
-        onCancelListen = {
-            Preferences.captureMode = false;
+        onDone = {
+            Preferences.captureMode = false
             listening = false
         },
         blockOriginal = block,

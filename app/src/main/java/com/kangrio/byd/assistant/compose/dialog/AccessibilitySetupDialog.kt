@@ -17,17 +17,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.kangrio.byd.assistant.util.Preferences
 
 @Composable
 fun AccessibilitySetupDialog(
     onDismiss: () -> Unit,
     enabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
-    triggerKeyCode: Int,
+    triggerKeyCodes: List<Int>,
     listening: Boolean,
     onListen: () -> Unit,
-    onCancelListen: () -> Unit,
+    onDone: () -> Unit,
     blockOriginal: Boolean,
     onBlockOriginalChange: (Boolean) -> Unit,
     keyEventAction: Int,
@@ -59,19 +58,19 @@ fun AccessibilitySetupDialog(
                         Text("Trigger Button")
                         Text(
                             text = when {
-                                listening -> "Press a button..."
-                                triggerKeyCode == Preferences.KEYCODE_NONE -> "Not set"
-                                else -> KeyEvent.keyCodeToString(triggerKeyCode)
+                                listening && triggerKeyCodes.isEmpty() -> "Press a button..."
+                                triggerKeyCodes.isEmpty() -> "Not set"
+                                else -> KeyEvent.keyCodeToString(triggerKeyCodes.first())
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     FilledTonalButton(
-                        onClick = if (listening) onCancelListen else onListen,
+                        onClick = if (listening) onDone else onListen,
                         enabled = enabled // capture needs the service running
                     ) {
-                        Text(if (listening) "Cancel" else "Listen")
+                        Text(if (listening) "Done" else "Listen")
                     }
                 }
 

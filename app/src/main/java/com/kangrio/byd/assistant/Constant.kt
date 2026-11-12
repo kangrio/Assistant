@@ -19,7 +19,7 @@ object Constant {
     const val OTA_NOTIFICATION_CHANNEL_ID = "ota_updates"
     const val OTA_NOTIFICATION_ID = 2001
     const val PREFS_ENABLED_BUTTON_TRIGGER = "enabled_button_trigger"
-    const val PREFS_TRIGGER_KEYCODE = "trigger_keycode"
+    const val PREFS_TRIGGER_KEYCODES = "trigger_keycodes"
     const val PREFS_CAPTURE_MODE = "capture_mode"
     const val PREFS_BLOCK_ORIGINAL = "block_original_action"
     const val PREFS_BUTTON_TRIGGER_ACTION = "button_trigger_action"
