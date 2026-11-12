@@ -60,7 +60,7 @@ fun AccessibilitySetupDialog(
                             text = when {
                                 listening && triggerKeyCodes.isEmpty() -> "Press a button..."
                                 triggerKeyCodes.isEmpty() -> "Not set"
-                                else -> KeyEvent.keyCodeToString(triggerKeyCodes.first())
+                                else -> triggerKeyCodes.joinToString { KeyEvent.keyCodeToString(it)}
                             },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant

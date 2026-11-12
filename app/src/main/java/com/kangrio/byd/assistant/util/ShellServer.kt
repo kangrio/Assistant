@@ -53,11 +53,11 @@ object ShellServer {
         }
     }
 
-    fun exec(cmd: String) {
+    fun exec(cmd: String) = scope.launch {
         Log.d("ShellServer", "exec: $cmd")
         if (isConnected()) {
             ShellServerHelper.exec(cmd)
-            return
+            return@launch
         }
 
         init {
@@ -65,10 +65,10 @@ object ShellServer {
         }
     }
 
-    fun runOnce(runnable: ShellServerRunnable, delay: Long) {
+    fun runOnce(runnable: ShellServerRunnable, delay: Long) = scope.launch {
         if (isConnected()) {
             ShellServerHelper.runOnce(runnable, delay)
-            return
+            return@launch
         }
 
         init {
@@ -76,16 +76,16 @@ object ShellServer {
         }
     }
 
-    fun reStartApp() {
+    fun reStartApp() = scope.launch {
         val packageName = App.get().packageName
         val activityName = WakeUpActivity::class.java.name
         runOnce(RestartAppRunnable(packageName, activityName), 100)
     }
 
-    fun schedule(runnable: ShellServerRunnable, delay: Long, period: Long) {
+    fun schedule(runnable: ShellServerRunnable, delay: Long, period: Long) = scope.launch {
         if (isConnected()) {
             ShellServerHelper.schedule(runnable, delay, period)
-            return
+            return@launch
         }
 
         init {
