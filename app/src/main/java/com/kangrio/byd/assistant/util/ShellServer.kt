@@ -38,14 +38,17 @@ object ShellServer {
 
         isInitialiizing = true
         scope.launch {
-            ShellServerHelper.init(App.get()) { iBinder ->
-                binder = iBinder
-                try {
-                    pendingInit.forEach { it(binder!!) }
+            try {
+                ShellServerHelper.init(App.get()) { iBinder ->
+                    binder = iBinder
+                    try {
+                        pendingInit.forEach { it(binder!!) }
+                    } catch (e: Throwable) {
+                    }
                     pendingInit.clear()
                     isInitialiizing = false
-                } catch (e: Throwable) {
                 }
+            } catch (e: Throwable) {
             }
         }
     }
